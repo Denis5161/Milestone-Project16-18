@@ -10,7 +10,6 @@ import SpriteKit
 import GameplayKit
 
 class GameScene: SKScene {
-    
     var scoreLabel: SKLabelNode!
     var timerLabel: SKLabelNode!
     var gameOverLabel: SKSpriteNode!
@@ -32,7 +31,6 @@ class GameScene: SKScene {
     
     var shotFinder: SKSpriteNode!
     var shotsLeftLabel: SKSpriteNode!
-    var reloadLabel: SKLabelNode!
     var shotSound = SKAction.playSoundFileNamed("shot.wav", waitForCompletion: false)
     var reloadSound = SKAction.playSoundFileNamed("reload.wav", waitForCompletion: false)
     var emptySound = SKAction.playSoundFileNamed("empty.wav", waitForCompletion: false)
@@ -87,12 +85,18 @@ class GameScene: SKScene {
         shotsLeftLabel.zPosition = 2
         addChild(shotsLeftLabel)
         
-        reloadLabel = SKLabelNode(fontNamed: "Chalkduster")
+        let reloadSprite = SKSpriteNode()
+        reloadSprite.size = CGSize(width: 150, height: 210)
+        reloadSprite.name = "reload"
+        reloadSprite.position = CGPoint(x: 512, y: 60)
+        reloadSprite.zPosition = 3
+        addChild(reloadSprite)
+        
+        let reloadLabel = SKLabelNode(fontNamed: "Chalkduster")
         reloadLabel.position = CGPoint(x: 512, y: 96)
         reloadLabel.zPosition = 2
         reloadLabel.fontSize = 32
         reloadLabel.text = "RELOAD!"
-        reloadLabel.name = "reload"
         addChild(reloadLabel)
         
         secondsRemaining = 60
@@ -110,8 +114,7 @@ class GameScene: SKScene {
         
         let row = RowType.allCases.randomElement()!
         var vector = CGVector(dx: 2000, dy: 0)
-        let duck = Duck(imageNamed: "duckGood")
-        duck.randomizeDuck()
+        let duck = Duck()
         
         switch row {
         case .upper:
@@ -126,7 +129,7 @@ class GameScene: SKScene {
         addChild(duck)
         duck.run(SKAction.move(by: vector, duration: TimeInterval.random(in: 2...7)))
     }
-
+    
     override func update(_ currentTime: TimeInterval) {
         for node in children {
             if node.position.x > 1024 || node.position.x < 0 {
@@ -150,16 +153,14 @@ class GameScene: SKScene {
             shotFinder.isHidden = false
             shotsLeft -= 1
             
-            for node in tappedNodes {
-                if let duckNode = node as? Duck {
-                    duckNode.removeAllActions()
-                    duckNode.run(SKAction.fadeOut(withDuration: 1)) { node.removeFromParent() }
-                    
-                    if duckNode.name == "duckEnemy" {
-                        score += 1 * duckNode.scoreMultiplier
-                    } else if duckNode.name == "duckFriend" {
-                        score -= 1
-                    }
+            for node in tappedNodes.compactMap({ $0 as? Duck }) {
+                node.removeAllActions()
+                node.run(SKAction.fadeOut(withDuration: 1)) { node.removeFromParent() }
+                
+                if node.name == "duckEnemy" {
+                    score += 1 * node.scoreMultiplier
+                } else if node.name == "duckFriend" {
+                    score -= 1
                 }
             }
         } else {

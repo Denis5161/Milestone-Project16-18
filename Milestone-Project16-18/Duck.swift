@@ -12,7 +12,18 @@ import SpriteKit
 class Duck: SKSpriteNode {
     var scoreMultiplier: Int!
     
-    func randomizeDuck() {
+    init() {
+        let texture = SKTexture(imageNamed: "duckGood")
+        super.init(texture: texture, color: .clear, size: texture.size())
+        randomizeDuck()
+        
+    }
+    
+    required convenience init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func randomizeDuck() {
         if Int.random(in: 0...1) == 0 {
             texture = SKTexture(imageNamed: "duckBad")
             name = "duckEnemy"
