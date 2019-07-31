@@ -14,6 +14,7 @@ class GameScene: SKScene {
     var scoreLabel: SKLabelNode!
     var timerLabel: SKLabelNode!
     var gameOverLabel: SKSpriteNode!
+    var gameIsOver = false
     
     var gameTimer: Timer?
     
@@ -32,14 +33,13 @@ class GameScene: SKScene {
     
     var shotFinder: SKSpriteNode!
     var shotsLeftLabel: SKSpriteNode!
-    var reloadingShot = false
+    var reloadLabel: SKLabelNode!
     var shotsLeft = 3 {
         didSet {
             switch shotsLeft {
             case 3:
                 shotsLeftLabel.texture = SKTexture(imageNamed: "shots3")
                 run(SKAction.playSoundFileNamed("reload.wav", waitForCompletion: false))
-                reloadingShot = false
             case 2:
                 shotsLeftLabel.texture = SKTexture(imageNamed: "shots2")
                 run(SKAction.playSoundFileNamed("shot.wav", waitForCompletion: false))
@@ -92,6 +92,14 @@ class GameScene: SKScene {
         shotsLeftLabel.zPosition = 2
         addChild(shotsLeftLabel)
         
+        reloadLabel = SKLabelNode(fontNamed: "Chalkduster")
+        reloadLabel.position = CGPoint(x: 512, y: 96)
+        reloadLabel.zPosition = 2
+        reloadLabel.fontSize = 32
+        reloadLabel.text = "RELOAD!"
+        reloadLabel.name = "reload"
+        addChild(reloadLabel)
+        
         secondsRemaining = 60
         score = 0
         
@@ -125,7 +133,7 @@ class GameScene: SKScene {
             vector = CGVector(dx: 2000, dy: 0)
         }
         
-        if Int.random(in: 0...2) == 0 {
+        if Int.random(in: 0...1) == 0 {
             duck.texture = SKTexture(imageNamed: "duckBad")
             duck.name = "duckEnemy"
         } else {
@@ -160,11 +168,15 @@ class GameScene: SKScene {
         let tappedNodes = nodes(at: touchLocation)
         
         shotFinder.position = touchLocation
-        shotFinder.isHidden = false
+        
+        if tappedNodes.contains(where: { $0.name == "reload"}) {
+            shotsLeft = 3
+            return
+        }
         
         if shotsLeft != 0 {
+            shotFinder.isHidden = false
             shotsLeft -= 1
-            
             
             for node in tappedNodes {
                 if let duckNode = node as? Duck {
@@ -179,11 +191,9 @@ class GameScene: SKScene {
                     }
                 }
             }
-        } else if reloadingShot {
-            shotsLeft = 3
         } else {
+            shotFinder.isHidden = true
             run(SKAction.playSoundFileNamed("empty.wav", waitForCompletion: false))
-            reloadingShot = true
         }
     }
     
