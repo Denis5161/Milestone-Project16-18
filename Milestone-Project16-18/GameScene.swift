@@ -18,7 +18,6 @@ class GameScene: SKScene {
     
     var gameTimer: Timer?
     
-    
     var score = 0 {
         didSet {
             scoreLabel.text = "Score: \(score)"
@@ -34,21 +33,17 @@ class GameScene: SKScene {
     var shotFinder: SKSpriteNode!
     var shotsLeftLabel: SKSpriteNode!
     var reloadLabel: SKLabelNode!
+    var shotSound = SKAction.playSoundFileNamed("shot.wav", waitForCompletion: false)
+    var reloadSound = SKAction.playSoundFileNamed("reload.wav", waitForCompletion: false)
+    var emptySound = SKAction.playSoundFileNamed("empty.wav", waitForCompletion: false)
     var shotsLeft = 3 {
         didSet {
+            shotsLeftLabel.texture = SKTexture(imageNamed: "shots\(shotsLeft)")
             switch shotsLeft {
             case 3:
-                shotsLeftLabel.texture = SKTexture(imageNamed: "shots3")
-                run(SKAction.playSoundFileNamed("reload.wav", waitForCompletion: false))
-            case 2:
-                shotsLeftLabel.texture = SKTexture(imageNamed: "shots2")
-                run(SKAction.playSoundFileNamed("shot.wav", waitForCompletion: false))
-            case 1:
-                shotsLeftLabel.texture = SKTexture(imageNamed: "shots1")
-                run(SKAction.playSoundFileNamed("shot.wav", waitForCompletion: false))
-            case 0:
-                shotsLeftLabel.texture = SKTexture(imageNamed: "shots0")
-                run(SKAction.playSoundFileNamed("shot.wav", waitForCompletion: false))
+                run(reloadSound)
+            case 0...2:
+                run(shotSound)
             default:
                 preconditionFailure("Variable shotsLeft shouldn't be below 0.")
             }
@@ -76,7 +71,7 @@ class GameScene: SKScene {
         timerLabel.position = CGPoint(x: 1008, y: 16)
         addChild(timerLabel)
         
-        gameOverLabel = SKSpriteNode(imageNamed: "game-over")
+        gameOverLabel = SKSpriteNode(imageNamed: "gameOver")
         gameOverLabel.position = CGPoint(x: 512, y: 384)
         gameOverLabel.alpha = 0
         gameOverLabel.zPosition = 2
@@ -102,9 +97,7 @@ class GameScene: SKScene {
         
         secondsRemaining = 60
         score = 0
-        
         gameTimer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(createDuck), userInfo: nil, repeats: true)
-        
     }
     
     @objc func createDuck() {
@@ -116,46 +109,25 @@ class GameScene: SKScene {
         }
         
         let row = RowType.allCases.randomElement()!
-        
-        let duration = Double.random(in: 2...7)
-        let vector: CGVector
+        var vector = CGVector(dx: 2000, dy: 0)
         let duck = Duck(imageNamed: "duckGood")
+        duck.randomizeDuck()
         
         switch row {
         case .upper:
             duck.position = CGPoint(x: 0, y: 768 * 0.66)
-            vector = CGVector(dx: 2000, dy: 0)
         case .middle:
             duck.position = CGPoint(x: 1024, y: 768 * 0.5)
             vector = CGVector(dx: -2000, dy: 0)
         case .lower:
             duck.position = CGPoint(x: 0, y: 768 * 0.33)
-            vector = CGVector(dx: 2000, dy: 0)
-        }
-        
-        if Int.random(in: 0...1) == 0 {
-            duck.texture = SKTexture(imageNamed: "duckBad")
-            duck.name = "duckEnemy"
-        } else {
-            duck.texture = SKTexture(imageNamed: "duckGood")
-            duck.name = "duckFriend"
-        }
-        
-        if Int.random(in: 0...2) > 1 {
-            duck.scale(to: CGSize(width: duck.size.width / 2, height: duck.size.height / 2))
-            duck.scoreMultiplier = 2
-        } else {
-            duck.scoreMultiplier = 1
         }
         
         addChild(duck)
-        duck.run(SKAction.move(by: vector, duration: duration))
-        
+        duck.run(SKAction.move(by: vector, duration: TimeInterval.random(in: 2...7)))
     }
 
     override func update(_ currentTime: TimeInterval) {
-        // Called before each frame is rendered
-        
         for node in children {
             if node.position.x > 1024 || node.position.x < 0 {
                 node.removeFromParent()
@@ -181,7 +153,6 @@ class GameScene: SKScene {
             for node in tappedNodes {
                 if let duckNode = node as? Duck {
                     duckNode.removeAllActions()
-                    duckNode.run(SKAction.fadeOut(withDuration: 1))
                     duckNode.run(SKAction.fadeOut(withDuration: 1)) { node.removeFromParent() }
                     
                     if duckNode.name == "duckEnemy" {
@@ -193,10 +164,9 @@ class GameScene: SKScene {
             }
         } else {
             shotFinder.isHidden = true
-            run(SKAction.playSoundFileNamed("empty.wav", waitForCompletion: false))
+            run(emptySound)
         }
     }
-    
 }
 
 enum RowType: CaseIterable {
